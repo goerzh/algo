@@ -3,6 +3,8 @@
 #include <list>
 #include <iostream>
 
+using namespace myalgo;
+
 int main() {
     LinkedList list;
 

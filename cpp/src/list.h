@@ -3,18 +3,21 @@
 
 #include <cassert>
 
+namespace myalgo {
+
 struct Node {
     int value;
     Node *next;
     Node *prev;
 
-    explicit Node(): Node(0) {}
-    explicit Node(int data): value(data), next(nullptr), prev(nullptr) {}
+    explicit Node() : Node(0) {}
+
+    explicit Node(int data) : value(data), next(nullptr), prev(nullptr) {}
 };
 
 class LinkedList {
 public:
-    LinkedList():head(nullptr) {};
+    LinkedList() : head(nullptr) {};
 
     void push_back(int data) {
         Node *n = new Node(data);
@@ -101,7 +104,7 @@ public:
     }
 
     void remove_last_index(int i) {
-        Node *target  = find_index(len() - i - 1);
+        Node *target = find_index(len() - i - 1);
         remove_node(target);
     }
 
@@ -119,10 +122,10 @@ public:
     }
 
     Node *middle() {
-        return find_index((len()-1)/2);
+        return find_index((len() - 1) / 2);
     }
 
-    void merge(LinkedList& right) {
+    void merge(LinkedList &right) {
         Node *first = head;
         Node *second = right.head;
         while (first != nullptr && second != nullptr) {
@@ -231,5 +234,5 @@ private:
 
     Node *head;
 };
-
+}
 #endif //ALGO_LIST_H
