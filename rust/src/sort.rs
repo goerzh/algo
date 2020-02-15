@@ -167,6 +167,87 @@ fn partition(v: &mut [i32], b: usize, e: usize) -> usize {
     i+1
 }
 
+pub fn counting_sort(v: &mut [i32]) {
+    counting_sort_c(v, v.len());
+}
+
+// 不对c进行累加，而是进行遍历，如果有值就放入结果中
+fn counting_sort_c(v: &mut [i32], n: usize) {
+    if n <= 1 { return; }
+    let mut max = 0;
+    let mut i: usize = 0;
+    while i < n {
+        if v[i] > max {
+            max = v[i];
+        }
+        i += 1;
+    }
+
+    let mut c: Vec<i32> = vec![0; (max+1) as usize];
+    i = 0;
+    while i < n {
+        c[v[i] as usize] += 1;
+        i += 1;
+    }
+    
+    i = 0;
+    let mut index = 0;
+    while i <= max as usize{
+        while c[i] > 0 {
+            v[index] = i as i32;
+            c[i] -= 1;
+            index += 1;
+        }
+        i += 1;
+    }
+}
+
+pub fn counting_sort2(v: &mut [i32]) {
+    counting_sort_c2(v, v.len());
+}
+
+//对C进行累加，然后遍历v，插入结果中。这种可以用于排序Object，第一种需要大量内存存储Object
+fn counting_sort_c2(v: &mut [i32], n: usize) {
+    if n <= 1 { return; }
+    let mut max = 0;
+    let mut i: usize = 0;
+    while i < n {
+        if v[i] > max {
+            max = v[i];
+        }
+        i += 1;
+    }
+
+    let mut c: Vec<i32> = vec![0; (max+1) as usize];
+    i = 0;
+    while i < n {
+        c[v[i] as usize] += 1;
+        i += 1;
+    }
+
+    // 累加
+    i = 1;
+    while i <= max as usize {
+        c[i] += c[i-1];
+        i += 1;
+    }
+
+    let mut i: i32 = (n - 1) as i32;
+    let mut r = vec![0; n];
+    while i >= 0 {
+        let index = c[v[i as usize] as usize] - 1;
+        r[index as usize] = v[i as usize];
+        c[v[i as usize] as usize] -= 1;
+        i -= 1;
+    }
+
+    let mut i: usize = 0;
+    while i < n {
+        v[i] = r[i];
+        i += 1;
+    }
+}
+
 mod tests{
     #[test]
     pub fn test_sorts() {
@@ -190,6 +271,18 @@ mod tests{
         let mut v = [4, 3, 2, 6, 7, 1, 5];
         quick_sort(&mut v);
         assert_eq!(v, [1, 2, 3, 4, 5, 6, 7]);
+
+        let mut v = [4, 3, 2, 6, 7, 1, 5];
+        counting_sort(&mut v);
+        assert_eq!(v, [1, 2, 3, 4, 5, 6, 7]);
+
+        let mut v = [4, 3, 2, 6, 7, 1, 5];
+        counting_sort2(&mut v);
+        assert_eq!(v, [1, 2, 3, 4, 5, 6, 7]);
+
+        let mut v = [3, 3, 2, 6, 7, 1, 5];
+        counting_sort2(&mut v);
+        assert_eq!(v, [1, 2, 3, 3, 5, 6, 7]);
     }
 
     #[test]
