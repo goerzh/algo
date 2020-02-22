@@ -249,6 +249,9 @@ fn counting_sort_c2(v: &mut [i32], n: usize) {
 }
 
 mod tests{
+    use rand::Rng;
+    use crate::sort::{bubble_sort, insert_sort, selection_sort, merge_sort, quick_sort};
+
     #[test]
     pub fn test_sorts() {
         use super::*;
@@ -287,6 +290,42 @@ mod tests{
 
     #[test]
     pub fn benchmark() {
+        use rand::Rng;
+        use std::time::Instant;
 
+        let mut nums_bubble: Vec<i32> = Vec::with_capacity(10000);
+        let mut nums_insert: Vec<i32> = Vec::with_capacity(10000);
+        let mut nums_selection: Vec<i32> = Vec::with_capacity(10000);
+        let mut nums_merge: Vec<i32> = Vec::with_capacity(10000);
+        let mut nums_quick: Vec<i32> = Vec::with_capacity(10000);
+        let mut rng = rand::thread_rng();
+        for i in 0..10000 {
+            let random = rng.gen_range(0, 10000);
+            nums_bubble.push(random);
+            nums_insert.push(random);
+            nums_selection.push(random);
+            nums_merge.push(random);
+            nums_quick.push(random);
+        }
+
+        let start = Instant::now();
+        bubble_sort(&mut nums_bubble);
+        println!("bubble sort cost: {:?}", start.elapsed().as_millis());
+
+        let start = Instant::now();
+        insert_sort(&mut nums_insert);
+        println!("insert sort cost: {:?}", start.elapsed().as_millis());
+
+        let start = Instant::now();
+        selection_sort(&mut nums_selection);
+        println!("selection sort cost: {:?}", start.elapsed().as_millis());
+
+        let start = Instant::now();
+        merge_sort(&mut nums_merge);
+        println!("merge sort cost: {:?}", start.elapsed().as_millis());
+
+        let start = Instant::now();
+        quick_sort(&mut nums_quick);
+        println!("quick sort cost: {:?}", start.elapsed().as_millis());
     }
 }
