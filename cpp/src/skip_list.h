@@ -18,7 +18,7 @@ struct Node {
 
 class SkipList {
 public:
-    SkipList(): head(new Node), levelCount(0) {
+    SkipList(): head(new Node), levelCount(1) {
     }
 
     void insert(int value) {
@@ -51,6 +51,32 @@ public:
         }
 
     }
+
+    void insert2(int value) {
+        int level = head->forward[0] == nullptr ? 1 : random();
+        if (level > levelCount) {
+            level = ++levelCount;
+        }
+
+        Node *newNode = new Node();
+        newNode->data = value;
+        newNode->max_level = level;
+
+        Node *p = head;
+        for (int i = level; i >= 0; --i) {
+            while (p->forward[i] != nullptr && p->forward[i]->data < value) {
+                p = p->forward[i];
+            }
+
+            newNode->forward[i] = p->forward[i];
+            p->forward[i] = newNode;
+        }
+
+        if (level > levelCount) {
+            levelCount = level;
+        }
+    }
+
     Node *find(int value) {
         Node *p = head;
         for (int i = levelCount; i >= 0 ; --i) {
@@ -59,10 +85,31 @@ public:
             }
         }
 
-        if (p != nullptr && p->data == value ) {
-            return p;
+        if (p->forward[0] != nullptr && p->forward[0]->data == value ) {
+            return p->forward[0];
         } else {
             return nullptr;
+        }
+    }
+
+    void deleteNode(int value) {
+        Node *p = head;
+        Node *target = nullptr;
+        for (int i = levelCount; i >= 0 ; --i) {
+            while (p->forward[i] != nullptr && p->forward[i]->data < value) {
+                p = p->forward[i];
+            }
+            if (i == 0) {
+                target = p->forward[0];
+            }
+
+            if (p->forward[i] != nullptr && p->forward[i]->data == value) {
+                p->forward[i] = p->forward[i]->forward[i];
+            }
+        }
+
+        if (target != nullptr && target->data == value) {
+            free(target);
         }
     }
 
