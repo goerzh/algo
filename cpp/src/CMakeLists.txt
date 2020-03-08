@@ -6,6 +6,7 @@ set(SRC
         skip_list.h
         hashmap.h
         binary_search_tree.h
+        red_black_tree.h
 )
 
 add_library(myalgo ${SRC})
