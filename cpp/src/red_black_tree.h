@@ -22,7 +22,10 @@ class RedBlackTree {
 public:
     RedBlackTree():
     root(nullptr),
-    nil_node(new RBTreeNode<T>(T(), BLACK, nullptr, nullptr, nullptr)) {}
+    nil_node(new RBTreeNode<T>(T(), BLACK, nullptr, nullptr, nullptr)) {
+        nil_node->left = nil_node;
+        nil_node->right = nil_node;
+    }
 
     void insert(T value) {
         auto p = root;
@@ -58,35 +61,9 @@ public:
         fixAfterInsert(p);
     }
 
-    void fixAfterInsert(RBTreeNode<T> *p) {
-        p->color = RED;
-        while (p != root && p->parent->color == RED) {
-            RBTreeNode<T> *uncle;
-            if (p->parent == p->parent->parent->left) {
-                uncle = p->parent->parent->right;
-            } else {
-                uncle = p->parent->parent->left;
-            };
-            /// 情况1
-            if (getColor(uncle) == RED) {
-                setColor(p->parent, BLACK);
-                setColor(uncle, BLACK);
-                setColor(p->parent->parent, RED);
-                p = p->parent->parent;
-            /// 情况2
-            } else if (getColor(uncle) == BLACK && p == p->parent->right) {
-                p = p->parent;
-                rotateLeft(p);
-            /// 情况3
-            } else if (getColor(uncle) == BLACK && p == p->parent->left) {
-                rotateRight(p->parent->parent);
-                setColor(p->parent, BLACK);
-                setColor(p->parent->right, RED);
-            }
-        }
-        root->color = BLACK;
+    void remove() {
+
     }
-    void remove() {}
 
     void level_order() {
         std::queue<RBTreeNode<T> *> q1;
@@ -97,10 +74,10 @@ public:
             while (!q1.empty()) {
                 RBTreeNode<T> *p = q1.front();
                 q1.pop();
-                if (p->left != nullptr) {
+                if (p != nil_node) {
                     q2.push(p->left);
                 }
-                if (p->right != nullptr) {
+                if (p != nil_node) {
                     q2.push(p->right);
                 }
                 if (p == nil_node) {
@@ -114,10 +91,10 @@ public:
             while (!q2.empty()) {
                 auto p = q2.front();
                 q2.pop();
-                if (p->left != nullptr) {
+                if (p != nil_node) {
                     q1.push(p->left);
                 }
-                if (p->right != nullptr) {
+                if (p != nil_node) {
                     q1.push(p->right);
                 }
                 if (p == nil_node) {
@@ -131,6 +108,44 @@ public:
     }
 
 private:
+    void fixAfterInsert(RBTreeNode<T> *p) {
+        setColor(p, RED);
+        while (p != root && p->parent->color == RED) {
+            RBTreeNode<T> *uncle;
+            if (p->parent == p->parent->parent->left) {
+                uncle = p->parent->parent->right;
+            } else {
+                uncle = p->parent->parent->left;
+            };
+            /// 情况1
+            if (getColor(uncle) == RED) {
+                setColor(p->parent, BLACK);
+                setColor(uncle, BLACK);
+                setColor(p->parent->parent, RED);
+                p = p->parent->parent;
+            } else if (getColor(uncle) == BLACK && p->parent == p->parent->parent->left && p == p->parent->right) {
+                /// 情况2
+                p = p->parent;
+                rotateLeft(p);
+            } else if (getColor(uncle) == BLACK && p->parent == p->parent->parent->right && p == p->parent->left) {
+                /// 情况3
+                p = p->parent;
+                rotateRight(p);
+            } else {
+                setColor(p->parent, BLACK);
+                setColor(p->parent->parent, RED);
+                if (p->parent->parent->left == p->parent) {
+                    /// 情况4
+                    rotateRight(p->parent->parent);
+                } else {
+                    /// 情况5
+                    rotateLeft(p->parent->parent);
+                }
+            }
+        }
+        setColor(root, BLACK);
+    }
+
     void rotateLeft(RBTreeNode<T> *p) {
         if (p == nullptr) {
             return;
