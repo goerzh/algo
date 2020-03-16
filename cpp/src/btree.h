@@ -43,6 +43,7 @@ public:
         children.reserve(2*d-1);
     }
 
+private:
     void insert_item_at(int index, Entry<K, V>item) {
         items.insert(items.begin()+index, item);
     }
@@ -51,8 +52,53 @@ public:
         children.insert(children.begin()+index, node);
     }
 
-    void grow_child_and_remove(int i, int min_items, REMOVE typ) {
-
+    int grow_child(int i, int min_items) {
+        if (i > 0 && children[i-1]->items.size() > min_items) {
+            /// Steal from left child
+            BTreeNode* child = children[i];
+            BTreeNode* steal_from = children[i-1];
+            auto stolen_item = steal_from->items.back();
+            steal_from->items.pop_back();
+            child->insert_item_at(0, items[i-1]);
+            items[i-1] = stolen_item;
+            if (steal_from->children.size() > 0) {
+                child->insert_child_at(0, steal_from->children.back());
+                steal_from->children.pop_back();
+            }
+        } else if (i < items.size() && children[i+1]->items.size() > min_items) {
+            BTreeNode* child = children[i];
+            BTreeNode* steal_from = children[i+1];
+            auto stolen_item = steal_from->items.front();
+            steal_from->items.erase(steal_from->items.begin());
+            child->items.push_back(items[i]);
+            items[i] = stolen_item;
+            if (steal_from->children.size() > 0) {
+                child->children.push_back(steal_from->children.front());
+                steal_from->children.erase(steal_from->children.begin());
+            }
+        } else {
+            if (i >= items.size()) {
+                --i;
+            }
+            BTreeNode* child = children[i];
+            BTreeNode* merge_child = children[i+1];
+            children.erase(children.begin()+i+1);
+            auto merge_item = items[i];
+            items.erase(items.begin()+i);
+            child->items.push_back(merge_item);
+            std::copy(
+                    merge_child->items.begin(),
+                    merge_child->items.end(),
+                    std::back_inserter(child->items)
+            );
+            std::copy(
+                    merge_child->children.begin(),
+                    merge_child->children.end(),
+                    std::back_inserter(child->children)
+            );
+            free(merge_child);
+        }
+        return i;
     }
 
     /// 分裂节点, ith item 放在原节点最后一位
@@ -66,6 +112,67 @@ public:
         }
 
         return next;
+    }
+
+    Entry<K, V> remove_min(int min_items) {
+        if (children.size() == 0) {
+            auto out = items.front();
+            items.erase(items.begin());
+            return out;
+        }
+        int i = 0;
+        if (children[i]->items.size() <= min_items) {
+            grow_child(i, min_items);
+        }
+
+        BTreeNode* child = children.front();
+        return child->remove_min(min_items);
+    }
+
+    Entry<K, V> remove_max(int min_items) {
+        if (children.size() == 0) {
+            auto out = items.back();
+            items.pop_back();
+            return out;
+        }
+        /// If we get to here, we have children
+        int i = items.size();
+        if (children[i]->items.size() <= min_items) {
+            /// change items and children
+            grow_child(i, min_items);
+        }
+
+        BTreeNode *child = children.back();
+        return child->remove_max(min_items);
+    }
+
+    bool remove(Entry<K, V>& item, int min_items) {
+        int i = 0;
+        i = find_item(item);
+        if (children.size() == 0) {
+            if (i < items.size() && items[i] == item) {
+                items.erase(items.begin()+i);
+                return true;
+            }
+            return false;
+        }
+        /// If we get to here, we have children
+        if (children[i]->items.size() <= min_items) {
+            /// change items and children
+            i = grow_child(i, min_items);
+        } else {
+            /// no change
+            BTreeNode *child = children[i];
+            /// found
+            if (i < items.size() && items[i] == item) {
+                items[i] = child->remove_max(min_items);
+                return true;
+            }
+            return child->remove(item, min_items);
+        }
+        /// Final recursive call. Once we're here, we know that the item isn't in this
+        /// node and that the child is big enough to remove from.
+        return remove(item, min_items);
     }
 
     Entry<K, V> insert(Entry<K, V> item, int max_items) {
@@ -153,7 +260,28 @@ public:
         return out;
     }
 
+    void remove(K key) {
+        remove_item(Entry<K, V>(key, 0));
+    }
+
 private:
+    bool remove_item(Entry<K, V> item) {
+        if (root == nullptr || root->items.size() == 0) {
+            return false;
+        }
+        bool found = root->remove(item, min_items());
+        if (root->items.size() == 0 && root->children.size() > 0) {
+            auto oldroot = root;
+            root = root->children[0];
+            free(oldroot);
+        }
+        if (found) {
+            --length;
+        }
+
+        return found;
+    }
+
     int max_items() {
         return d*2 -1;
     }
